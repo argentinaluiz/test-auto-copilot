@@ -22,7 +22,8 @@ echo "📌 Branch: $BRANCH_NAME"
 SCHEMA_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9_]/_/g' | tr '[:upper:]' '[:lower:]')
 echo "📊 Schema: $SCHEMA_NAME"
 
-# Find available app port (3000-3099)
+# Find available app port (3001-3099 for worktrees)
+# Port 3000 is reserved for main repository
 find_available_port() {
     local start_port=$1
     local end_port=$2
@@ -36,8 +37,9 @@ find_available_port() {
     echo $start_port
 }
 
-APP_PORT=$(find_available_port 3000 3099)
-echo "🌐 App Port: $APP_PORT"
+# Worktrees start from 3001 to avoid conflict with main repo (3000)
+APP_PORT=$(find_available_port 3001 3099)
+echo "🌐 App Port: $APP_PORT (worktree isolated)"
 
 # Check if .env.example exists
 if [ ! -f ".env.example" ]; then
@@ -50,18 +52,38 @@ cp .env.example .env
 echo "✅ Copied .env.example to .env"
 
 # Update PORT in .env
-sed -i.bak "s/^PORT=.*/PORT=$APP_PORT/" .env && rm .env.bak
+if sed -i.bak "s/^PORT=.*/PORT=$APP_PORT/" .env && rm .env.bak; then
+    ACTUAL_PORT=$(grep "^PORT=" .env | cut -d= -f2)
+    if [ "$ACTUAL_PORT" = "$APP_PORT" ]; then
+        echo "✅ Updated PORT to $APP_PORT"
+    else
+        echo "⚠️  Warning: PORT may not have been updated correctly"
+    fi
+else
+    echo "❌ Error: Failed to update PORT in .env"
+    exit 1
+fi
 
 # Check if shared PostgreSQL is running
 if docker ps --format '{{.Names}}' | grep -q "^express-postgres$"; then
-    echo "🐘 Using shared PostgreSQL"
+    echo "🐘 Database Mode: SHARED PostgreSQL"
+    echo "   ├─ Container: express-postgres (localhost:5432)"
+    echo "   └─ Schema: $SCHEMA_NAME (isolated)"
     
     # Update DATABASE_URL to use isolated schema
-    sed -i.bak "s|schema=public|schema=$SCHEMA_NAME|" .env && rm .env.bak
-    echo "   Schema: $SCHEMA_NAME (isolated)"
+    if sed -i.bak "s|schema=public|schema=$SCHEMA_NAME|" .env && rm .env.bak; then
+        echo "✅ Updated DATABASE_URL with isolated schema"
+    else
+        echo "❌ Error: Failed to update DATABASE_URL"
+        exit 1
+    fi
 else
-    echo "⚠️  Shared PostgreSQL not running. Setting up isolated mode."
+    echo "⚠️  Shared PostgreSQL not running"
+    echo "🐘 Database Mode: ISOLATED PostgreSQL"
     DB_PORT=$(find_available_port 5433 5499)
+    echo "   ├─ Container: postgres-$SCHEMA_NAME"
+    echo "   ├─ Port: $DB_PORT"
+    echo "   └─ Schema: public"
     
     # Update DATABASE_URL to use different port
     sed -i.bak "s|localhost:5432|localhost:$DB_PORT|" .env && rm .env.bak
@@ -82,14 +104,22 @@ volumes:
     name: postgres_data_$SCHEMA_NAME
 EOF
     
-    echo "📝 Created docker-compose.override.yml"
-    echo "   PostgreSQL Port: $DB_PORT"
+    echo "✅ Created docker-compose.override.yml"
+    echo ""
+    echo "⚠️  Next: Start isolated PostgreSQL with 'npm run docker:up'"
 fi
 
 echo ""
-echo "✅ Worktree configured!"
+echo "✅ Worktree configured successfully!"
+echo ""
+echo "📋 Configuration:"
+echo "   ├─ Branch: $BRANCH_NAME"
+echo "   ├─ App Port: $APP_PORT"
+echo "   └─ DB Schema: $SCHEMA_NAME"
 echo ""
 echo "📋 Next steps:"
-echo "   npm install"
-echo "   npm run prisma:migrate"
-echo "   npm run dev  # http://localhost:$APP_PORT"
+echo "   1. npm install"
+echo "   2. npm run prisma:migrate"
+echo "   3. npm run dev  # http://localhost:$APP_PORT"
+echo ""
+echo "💡 Tip: Each worktree runs on a separate port with isolated schema"
