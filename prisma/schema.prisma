@@ -10,11 +10,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Temporary model to enable Prisma Client generation
-// You can replace this with your actual models
-model Example {
+model Post {
   id        Int      @id @default(autoincrement())
-  name      String
+  title     String
+  content   String
+  published Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
