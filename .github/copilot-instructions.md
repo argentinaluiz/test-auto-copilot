@@ -30,6 +30,43 @@ Express.js blog application built with TypeScript following **Clean Architecture
 - **Controller Pattern**: Use class-based controllers with `.bind(controllerInstance)` when registering routes
 - **Middleware Order**: JSON/urlencoded parsing → routes → error handler (always last)
 
+## Docker & Database
+- **PostgreSQL in Docker**: Database runs in Docker container, application runs locally for development
+  - Use `npm run docker:up` to start PostgreSQL container
+  - Use `npm run docker:down` to stop container
+  - Data persists in named volume `postgres_data`
+- **Application Runtime**: App runs locally (not containerized) for fast hot-reload during development
+- **Environment Variables**: Managed via `.env` file (never commit this file)
+  - Use `.env.example` as template for required variables
+  - Load with `dotenv/config` at the top of `server.ts`
+- **Database Connection**: Initialized in `server.ts` startup, closed on graceful shutdown
+- **Health Checks**: `/health` endpoint verifies database connectivity
+
+## Prisma Conventions
+- **Schema Location**: `prisma/schema.prisma` contains all models and configuration
+- **Client Generation**: Always run `npm run prisma:generate` after schema changes
+  - Prisma Client is generated in `node_modules/.prisma/client`
+  - Type-safe query builder is available via `PrismaClient`
+- **Database Access**: 
+  - Use singleton `database` instance from `src/config/database.ts`
+  - Export `prisma` for direct use in repositories
+  - Follow interface pattern: `IDatabase` for dependency injection
+- **Migrations Workflow**:
+  - Development: `npm run prisma:migrate` (creates migration files)
+  - Prototyping: `npm run db:push` (skip migrations, faster iteration)
+  - Production: Apply migrations via CI/CD pipeline
+- **Prisma Studio**: Use `npm run prisma:studio` for database GUI (localhost:5555)
+- **Model Conventions**:
+  - Use `@id`, `@default(autoincrement())` for primary keys
+  - Add `createdAt DateTime @default(now())` and `updatedAt DateTime @updatedAt` to all models
+  - Use descriptive relation names
+  - Follow naming: models in PascalCase, fields in camelCase
+- **Repository Pattern**: 
+  - Create repository interfaces in domain layer
+  - Implement repositories using `prisma` client from config
+  - Never use `PrismaClient` directly in use cases or controllers
+  - Example: `PostRepository` implements `IPostRepository` and injects `prisma`
+
 ## SOLID Principles Applied
 - **Single Responsibility**: Each class/module has one reason to change
   - Controllers: HTTP handling only
@@ -45,10 +82,14 @@ Express.js blog application built with TypeScript following **Clean Architecture
 ## Build and Test
 ```bash
 npm install           # Install dependencies
+npm run docker:up     # Start PostgreSQL container
+npm run prisma:generate # Generate Prisma Client
 npm run dev          # Development with ts-node hot reload
 npm run build        # Compile TypeScript to dist/
 npm start            # Run compiled JavaScript from dist/
 npm run watch        # Watch mode for TypeScript compilation
+npm run prisma:studio # Open database GUI (localhost:5555)
+npm run docker:down  # Stop PostgreSQL container
 npm test             # Run unit tests
 npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Generate test coverage report
@@ -99,10 +140,22 @@ npm run test:coverage # Generate test coverage report
 - **Use Cases**: Create separate use case classes for each business operation
   - Example: `CreatePostUseCase`, `ListPostsUseCase`
 - **Repositories**: Interface-based for data access (enable testing and swappable implementations)
+  - Use Prisma Client via `src/config/database.ts`
+  - Never instantiate `PrismaClient` directly in repositories
+  - Import `prisma` singleton from config: `import { prisma } from '../config/database'`
+- **Database Config**: Singleton pattern in `src/config/database.ts`
+  - Implements `IDatabase` interface for DI
+  - Exports `database` (singleton) and `prisma` (client)
+  - Connection managed in `server.ts` lifecycle
 - **Error Handler**: Placed as the last middleware in `app.ts`
 - **Types**: Use `Express.Request` and extend it when needed (see `RequestWithUser`)
 - **API Responses**: Use `ApiResponse<T>` interface for consistent response shape
 - **DTOs**: Use Data Transfer Objects for request/response validation
+- **Environment Variables**: Load via `dotenv/config` at the top of `server.ts`
+- **Folder Structure**:
+  - `src/config/`: Configuration files (database, environment)
+  - `prisma/`: Prisma schema and migrations
+  - `src/repositories/`: Data access layer implementations
 
 ## Integration Points
 - **Port Configuration**: Defaults to 3000, override with `PORT` environment variable

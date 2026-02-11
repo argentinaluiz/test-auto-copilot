@@ -1,2 +1,28 @@
+# History
 .history/
+
+# Dependencies
 node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker
+docker-compose.override.yml
+
+# Database
+/pgdata
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

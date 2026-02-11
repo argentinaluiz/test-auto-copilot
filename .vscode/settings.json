@@ -1,0 +1,11 @@
+{
+    "chat.tools.terminal.ignoreDefaultAutoApproveRules": true,
+    "chat.tools.edits.autoApprove": {
+        "**/{package.json,server.xml,build.rs,web.config,.gitattributes,.env}": true,
+        "**/*-lock.{yaml,json}": true,
+        "**/*.lock": true
+    },
+    "chat.tools.terminal.autoApprove": {
+        "/.*/": true,
+    }
+}

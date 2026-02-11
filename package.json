@@ -7,16 +7,26 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f postgres",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "db:push": "prisma db push"
   },
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "@prisma/client": "^5.7.0",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "typescript": "^4.5.4",
     "ts-node": "^10.4.0",
     "@types/node": "^16.11.7",
-    "@types/express": "^4.17.13"
+    "@types/express": "^4.17.13",
+    "prisma": "^5.7.0"
   },
   "author": "",
   "license": "ISC"
