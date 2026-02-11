@@ -68,49 +68,53 @@ Express.js blog application built with TypeScript following **Clean Architecture
   - Example: `PostRepository` implements `IPostRepository` and injects `prisma`
 
 ## Git Worktree Support
-- **Parallel Development**: This project supports working on multiple features simultaneously using git worktrees
-- **Worktree Preparation Required**: Each new worktree **must** be configured before development
-  - Worktrees need isolated ports and database schemas to avoid conflicts
-  - **IMPORTANT**: Never start development in a new worktree without running setup first
-- **Setup Script**: After creating a worktree, run:
+
+> **⚠️ MANDATORY RULE - DO NOT SKIP**
+> 
+> Before ANY development work, you MUST run the appropriate setup based on your environment.
+> Failure to do so will cause port conflicts and database errors.
+
+- **Environment Detection**: Check if running in a worktree:
   ```bash
-  ./scripts/setup-worktree.sh
+  git rev-parse --git-dir
   ```
-  - Automatically detects available ports (3000-3099 for app)
-  - Copies `.env.example` to `.env` with unique configuration
-  - Generates isolated PostgreSQL schema from branch name (e.g., `feature_auth`)
-  - Chooses between shared or isolated database mode
-- **Database Modes**:
-  - **Shared (Default)**: All worktrees use same PostgreSQL container with different schemas
-    - Recommended for most development scenarios
-    - Lighter on resources (single container)
-    - Automatically selected if `express-postgres` container is running
-  - **Isolated**: Each worktree gets its own PostgreSQL container and port
-    - Automatically configured if shared database not available
-    - Uses ports 5433+ for PostgreSQL
-    - Creates `docker-compose.override.yml` automatically
-- **Workflow for Copilot Background Agent**:
-  ```bash
-  # After creating worktree, run:
-  ./scripts/setup-worktree.sh   # Configure environment
-  npm install                   # Install dependencies
-  npm run prisma:migrate        # Create/sync database schema
-  npm run dev                   # Start development (auto-assigned port)
-  ```
-- **Port Mapping**: Each worktree gets unique ports to prevent conflicts
-  - Main worktree: `http://localhost:3000`
-  - Other worktrees: Auto-assigned (3001, 3002, etc.)
-  - Check `.env` file for assigned port
-- **Schema Isolation**: Branch name determines PostgreSQL schema
-  - `main` → `public` schema
-  - `feature/auth` → `feature_auth` schema
-  - `bugfix/login` → `bugfix_login` schema
-  - Schemas are isolated: migrations in one worktree don't affect others
-- **Cleanup**: Use git native commands to remove worktrees
-  ```bash
-  git worktree remove <path>
-  ```
-  - Optionally drop the schema from shared database manually if needed
+  - If output contains `/worktrees/` → **You are in a worktree**
+  - Otherwise → **You are in the main repository**
+
+### REQUIRED Setup Steps
+
+**🔴 IN A WORKTREE (MANDATORY):**
+```bash
+./scripts/setup-worktree.sh   # MUST run first - configures ports/schema
+npm install
+npm run prisma:migrate
+npm run dev
+```
+
+**🟢 IN MAIN REPOSITORY:**
+```bash
+cp .env.example .env          # Copy defaults
+npm install
+npm run docker:up             # Start shared PostgreSQL
+npm run prisma:migrate
+npm run dev
+```
+
+### What setup-worktree.sh Does (Automatic)
+- Copies `.env.example` → `.env`
+- Finds available port (3000-3099) and sets `PORT`
+- Generates unique PostgreSQL schema from branch name (`feature/auth` → `feature_auth`)
+- Updates `DATABASE_URL` with isolated schema
+- Creates `docker-compose.override.yml` if shared PostgreSQL not available
+
+### Database Modes
+- **Shared (Default)**: All worktrees share `express-postgres` container with isolated schemas
+- **Isolated (Fallback)**: Each worktree gets dedicated PostgreSQL on ports 5433+
+
+### Port Allocation
+- Main: `http://localhost:3000`
+- Worktrees: Auto-assigned (`3001`, `3002`, etc.)
+- Check `.env` for your assigned port
 
 ## SOLID Principles Applied
 - **Single Responsibility**: Each class/module has one reason to change
