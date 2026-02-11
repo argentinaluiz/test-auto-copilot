@@ -67,6 +67,51 @@ Express.js blog application built with TypeScript following **Clean Architecture
   - Never use `PrismaClient` directly in use cases or controllers
   - Example: `PostRepository` implements `IPostRepository` and injects `prisma`
 
+## Git Worktree Support
+- **Parallel Development**: This project supports working on multiple features simultaneously using git worktrees
+- **Worktree Preparation Required**: Each new worktree **must** be configured before development
+  - Worktrees need isolated ports and database schemas to avoid conflicts
+  - **IMPORTANT**: Never start development in a new worktree without running setup first
+- **Setup Script**: After creating a worktree, run:
+  ```bash
+  ./scripts/setup-worktree.sh
+  ```
+  - Automatically detects available ports (3000-3099 for app)
+  - Copies `.env.example` to `.env` with unique configuration
+  - Generates isolated PostgreSQL schema from branch name (e.g., `feature_auth`)
+  - Chooses between shared or isolated database mode
+- **Database Modes**:
+  - **Shared (Default)**: All worktrees use same PostgreSQL container with different schemas
+    - Recommended for most development scenarios
+    - Lighter on resources (single container)
+    - Automatically selected if `express-postgres` container is running
+  - **Isolated**: Each worktree gets its own PostgreSQL container and port
+    - Automatically configured if shared database not available
+    - Uses ports 5433+ for PostgreSQL
+    - Creates `docker-compose.override.yml` automatically
+- **Workflow for Copilot Background Agent**:
+  ```bash
+  # After creating worktree, run:
+  ./scripts/setup-worktree.sh   # Configure environment
+  npm install                   # Install dependencies
+  npm run prisma:migrate        # Create/sync database schema
+  npm run dev                   # Start development (auto-assigned port)
+  ```
+- **Port Mapping**: Each worktree gets unique ports to prevent conflicts
+  - Main worktree: `http://localhost:3000`
+  - Other worktrees: Auto-assigned (3001, 3002, etc.)
+  - Check `.env` file for assigned port
+- **Schema Isolation**: Branch name determines PostgreSQL schema
+  - `main` → `public` schema
+  - `feature/auth` → `feature_auth` schema
+  - `bugfix/login` → `bugfix_login` schema
+  - Schemas are isolated: migrations in one worktree don't affect others
+- **Cleanup**: Use git native commands to remove worktrees
+  ```bash
+  git worktree remove <path>
+  ```
+  - Optionally drop the schema from shared database manually if needed
+
 ## SOLID Principles Applied
 - **Single Responsibility**: Each class/module has one reason to change
   - Controllers: HTTP handling only
