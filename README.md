@@ -1,209 +1,164 @@
-# Express TypeScript App
+# Agentes Autônomos com GitHub Copilot
 
-This is a basic Express.js application built with TypeScript. It serves as a starting point for building web applications using the Express framework and TypeScript.
+Este repositório contém o projeto desenvolvido durante a aula de **Agentes Autônomos com GitHub Copilot**. Trata-se de uma aplicação Express.js com TypeScript seguindo os princípios de **Clean Architecture** e padrões SOLID.
 
-## Prerequisites
+---
 
-- [Node.js](https://nodejs.org/) (v16 or higher)
-- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
-- npm or yarn
+## 📋 Pré-requisitos
 
-## Project Structure
+- Docker
+- Node.js v16+
+- npm
 
-```
-express-typescript-app
-├── src
-│   ├── app.ts               # Main application file
-│   ├── server.ts            # Server entry point with DB connection
-│   ├── config               # Configuration files
-│   │   └── database.ts      # Database configuration (Prisma)
-│   ├── controllers          # Directory for route controllers
-│   │   └── index.ts         # Index controller
-│   ├── routes               # Directory for route definitions
-│   │   └── index.ts         # Route definitions
-│   ├── middleware           # Directory for middleware functions
-│   │   └── errorHandler.ts # Error handling middleware
-│   └── types                # Directory for custom types
-│       └── index.ts         # Custom type definitions
-├── prisma
-│   └── schema.prisma        # Prisma schema for database models
-├── package.json             # NPM package configuration
-├── tsconfig.json            # TypeScript configuration
-├── docker-compose.yml       # Docker Compose for PostgreSQL
-├── .env.example             # Environment variables template
-└── README.md                # Project documentation
-```
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd express-typescript-app
-   ```
-
-2. Install the dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` if you need to change default values.
-
-## Database Setup
-
-This project uses PostgreSQL running in Docker and Prisma as the ORM.
-
-### Start PostgreSQL with Docker
+## 🚀 Instalação
 
 ```bash
-# Start PostgreSQL container
+# Clonar o repositório
+git clone https://github.com/argentinaluiz/test-auto-copilot.git
+cd test-auto-copilot
+
+# Instalar dependências
+npm install
+
+# Configurar variáveis de ambiente
+cp .env.example .env
+```
+
+## 🐳 Configuração do Banco de Dados
+
+O projeto utiliza PostgreSQL via Docker e Prisma como ORM.
+
+```bash
+# Iniciar container PostgreSQL
 npm run docker:up
 
-# Verify container is running
-docker ps
-
-# View PostgreSQL logs
-npm run docker:logs
-```
-
-### Generate Prisma Client
-
-After starting PostgreSQL, generate the Prisma Client:
-
-```bash
+# Gerar Prisma Client
 npm run prisma:generate
-```
 
-### Run Migrations (when you have models)
-
-```bash
-# Create and apply migrations (development)
+# Executar migrations
 npm run prisma:migrate
-
-# Push schema changes without migrations
-npm run db:push
 ```
 
-### Access Prisma Studio (Database GUI)
+## ▶️ Executando a Aplicação
 
-```bash
-npm run prisma:studio
-```
-
-This will open a web interface at `http://localhost:5555` where you can view and edit your database.
-
-## Usage
-
-### Development
-
-Run the application in development mode with hot reload:
+### Desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-The server will start at `http://localhost:3000`.
+O servidor será iniciado em `http://localhost:3000` (usa `ts-node` diretamente, sem hot reload).
 
-### Production
-
-1. Build the TypeScript code:
-   ```bash
-   npm run build
-   ```
-
-2. Start the production server:
-   ```bash
-   npm start
-   ```
-
-### Watch Mode
-
-For TypeScript compilation in watch mode:
+### Produção
 
 ```bash
-npm run watch
+npm run build
+npm start
 ```
 
-## Available Endpoints
+## 🛠️ Estrutura do Projeto
 
-- `GET /` - Welcome message
-- `GET /health` - Health check endpoint (checks database connection)
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Application port | `3000` |
-| `NODE_ENV` | Environment mode | `development` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/express_db?schema=public` |
-| `POSTGRES_USER` | PostgreSQL username (Docker) | `postgres` |
-| `POSTGRES_PASSWORD` | PostgreSQL password (Docker) | `postgres` |
-| `POSTGRES_DB` | PostgreSQL database name (Docker) | `express_db` |
-
-## Docker Commands
-
-```bash
-# Start PostgreSQL container in background
-npm run docker:up
-
-# Stop PostgreSQL container
-npm run docker:down
-
-# View PostgreSQL logs
-npm run docker:logs
-
-# Access PostgreSQL CLI
-docker exec -it express-postgres psql -U postgres -d express_db
+```
+express-typescript-app/
+├── src/
+│   ├── app.ts                    # Configuração do Express e middlewares
+│   ├── server.ts                 # Inicialização do servidor com conexão ao DB
+│   ├── config/
+│   │   └── database.ts           # Configuração do banco (Prisma singleton)
+│   ├── controllers/
+│   │   ├── index.ts              # Controller principal
+│   │   └── post.controller.ts    # Controller de posts
+│   ├── domain/
+│   │   └── post.interface.ts     # Interfaces do domínio (entidades)
+│   ├── middleware/
+│   │   └── errorHandler.ts       # Middleware de tratamento de erros
+│   ├── repositories/
+│   │   └── post.repository.ts    # Implementação do repositório (Prisma)
+│   ├── routes/
+│   │   ├── index.ts              # Registro centralizado de rotas
+│   │   └── posts.routes.ts       # Rotas de posts
+│   ├── types/
+│   │   └── index.ts              # Definições de tipos customizados
+│   └── use-cases/
+│       └── list-posts.use-case.ts # Caso de uso: listar posts
+├── prisma/
+│   ├── schema.prisma             # Schema do Prisma (modelos)
+│   └── migrations/               # Arquivos de migração
+├── scripts/
+│   └── setup-worktree.sh         # Setup para Git Worktrees
+├── docker-compose.yml            # Docker Compose para PostgreSQL
+├── package.json
+├── tsconfig.json
+└── README.md
 ```
 
-## Prisma Commands
+## 📚 Arquitetura (Clean Architecture)
+
+O projeto segue a Clean Architecture com separação clara de camadas:
+
+| Camada | Responsabilidade | Exemplo |
+|--------|-----------------|---------|
+| **Domain** | Entidades e regras de negócio | `post.interface.ts` |
+| **Use Cases** | Orquestração de lógica de aplicação | `list-posts.use-case.ts` |
+| **Interface Adapters** | Controllers e gateways | `post.controller.ts` |
+| **Frameworks & Drivers** | Express, Prisma, Docker | `app.ts`, `database.ts` |
+
+## 🔗 Endpoints Disponíveis
+
+- `GET /` - Mensagem de boas-vindas
+- `GET /health` - Health check (verifica conexão com o banco)
+- `GET /api/posts` - Listar posts
+
+## ⚙️ Variáveis de Ambiente
+
+| Variável | Descrição | Padrão |
+|----------|-----------|--------|
+| `PORT` | Porta da aplicação | `3000` |
+| `NODE_ENV` | Modo do ambiente | `development` |
+| `DATABASE_URL` | Connection string PostgreSQL | `postgresql://postgres:postgres@localhost:5432/express_db?schema=public` |
+| `POSTGRES_USER` | Usuário PostgreSQL (Docker) | `postgres` |
+| `POSTGRES_PASSWORD` | Senha PostgreSQL (Docker) | `postgres` |
+| `POSTGRES_DB` | Nome do banco (Docker) | `express_db` |
+
+## 📖 Comandos Úteis
 
 ```bash
-# Generate Prisma Client (after schema changes)
-npm run prisma:generate
+# Docker
+npm run docker:up           # Iniciar container PostgreSQL
+npm run docker:down         # Parar container
+npm run docker:logs         # Ver logs do PostgreSQL
 
-# Create and apply migrations
-npm run prisma:migrate
+# Prisma
+npm run prisma:generate     # Gerar Prisma Client
+npm run prisma:migrate      # Criar e aplicar migrations
+npm run db:push             # Push do schema (sem migrations)
+npm run prisma:studio       # Abrir GUI do banco (localhost:5555)
 
-# Push schema without migrations (useful for prototyping)
-npm run db:push
-
-# Open Prisma Studio (database GUI)
-npm run prisma:studio
-
-# Reset database (WARNING: deletes all data)
-npx prisma migrate reset
+# Aplicação
+npm run dev                 # Desenvolvimento (ts-node)
+npm run build               # Compilar TypeScript
+npm start                   # Executar versão compilada
+npm run watch               # Watch mode para compilação
 ```
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### Port 5432 already in use
+### Porta 5432 em uso
 
-If you have PostgreSQL running locally:
 ```bash
-# Stop local PostgreSQL service
+# Parar PostgreSQL local
 sudo service postgresql stop
-
-# Or change the port in docker-compose.yml
-# ports:
-#   - "5433:5432"
-# Then update DATABASE_URL in .env to use port 5433
 ```
 
-### Connection refused error
+### Erro de conexão recusada
 
-1. Ensure Docker containers are running: `docker ps`
-2. Check PostgreSQL logs: `npm run docker:logs`
-3. Verify DATABASE_URL matches your Docker configuration
+1. Verifique se o container está rodando: `docker ps`
+2. Veja os logs: `npm run docker:logs`
+3. Confirme a `DATABASE_URL` no `.env`
 
-### Prisma Client not found
+### Prisma Client não encontrado
 
-Run `npm run prisma:generate` to generate the Prisma Client.
+```bash
+npm run prisma:generate
+```
 
-## License
-
-This project is licensed under the MIT License.
